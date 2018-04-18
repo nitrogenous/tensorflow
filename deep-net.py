@@ -1,8 +1,9 @@
 import tensorflow as tf
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
-
+import matplotlib  
+matplotlib.use('TkAgg')   
+import matplotlib.pyplot as plt  
 def setLearningRate(weight):
 	global new_learning_rate
 	global n_samples
@@ -33,8 +34,8 @@ oldWeight = 0
 oldBias = 0 
 rnd = np.random
 
-readCSV = pd.read_csv('train1.csv',delimiter=',', names=['x_axis','y_axis'])
-readCSV = readCSV[0:250]
+readCSV = pd.read_csv('train.csv',delimiter=',', names=['x_axis','y_axis'])
+readCSV = readCSV[5:250]
 train_X = readCSV.x_axis
 train_Y = readCSV.y_axis
 n_samples = train_X.shape[0]
