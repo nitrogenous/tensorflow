@@ -6,19 +6,10 @@ import pandas as pd
 def setLearningRate(weight):
 	global new_learning_rate
 	global n_samples
-	# if(weight > 1.0):
-	# new_learning_rate = .0001
-	# else:
 	if(tf.is_nan(weight) == True):
 		exit()
 	else:
-		# if(weight < 0):
-		# 	# positiveWeight = weight * -1
-		# 	# return/
-		# else:
 		new_learning_rate = np.abs((0.001 / n_samples) / weight)
-		# print new_learning_rate
-		# return;
 	return
 
 def isEnough():
@@ -43,7 +34,6 @@ oldBias = 0
 rnd = np.random
 
 readCSV = pd.read_csv('train1.csv',delimiter=',', names=['x_axis','y_axis'])
-# print readCSV
 readCSV = readCSV[0:250]
 train_X = readCSV.x_axis
 train_Y = readCSV.y_axis
@@ -69,7 +59,6 @@ with tf.Session() as sess:
 
 	sess.run(init)
 	print 'Weight', sess.run(w)
-	# file_writer = tf.summary.FileWriter('/Users/jotform/Desktop/toprak/tensorflow/', sess.graph)
 
 	for epoch in range (training_epochs):
 
