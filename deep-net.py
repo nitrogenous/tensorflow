@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 import pandas as pd
+import math
 import matplotlib  
 matplotlib.use('TkAgg')   
 import matplotlib.pyplot as plt  
@@ -28,23 +29,49 @@ def oldArgs(cost,weight,bias):
 	# print  oldCost, oldWeight, oldBias, '\n'
 	return;
 
+def findFraud(input1,input2):
+	fraud1 = []
+	fraud2 = []
+	avg1 = (np.sum(input1) / len(input1)) + 10
+	avg2 = (np.sum(input2) / len(input2)) + 10
+	sum1 = 0.0
+	sum2 = 0.0
+	for in1,in2 in zip(input1,input2):
+		sum1 += (in1 - avg1)**2.0
+		sum2 += (in2 - avg2)**2.0
+	variance1 = sum1 / len(input1)
+	variance2 = sum2 / len(input2)
+	deviaton1 = math.sqrt(variance1) * 2.0
+	deviaton2 = math.sqrt(variance2) * 1.0
+	avg1 += deviaton1
+	avg2 += deviaton2
+	print '\nFraud Avg:', avg1, '\n'
+	print '\nFraud Avg:', avg2, '\n'
+	for in1,in2 in zip(input1,input2):
+		if((in1 > avg1 or in1 < (avg1*-1.0)) or (in2 > avg2 or in2 < (avg2*-1.0))):
+			fraud1.append(in1)
+			fraud2.append(in2)
+	return zip(fraud1,fraud2)
+
+
 enough = 0
 oldCost = 0
 oldWeight = 0
 oldBias = 0 
 rnd = np.random
 
-readCSV = pd.read_csv('train.csv',delimiter=',', names=['x_axis','y_axis'])
-readCSV = readCSV[5:250]
+readCSV = pd.read_csv('train1.csv',delimiter=',', names=['x_axis','y_axis'])
+readCSV = readCSV[1:251]
 train_X = readCSV.x_axis
 train_Y = readCSV.y_axis
+frauds = zip(*findFraud(train_X,train_Y))
+train_X = pd.Series(list(set(train_X) - set(frauds[0])))
+train_Y = pd.Series(list(set(train_Y) - set(frauds[1])))
 n_samples = train_X.shape[0]
 new_learning_rate = 0.001 / n_samples
-print new_learning_rate
 learning_rate = tf.placeholder('float')
-training_epochs = n_samples
+training_epochs = 100
 display_step = 1
-
 X = tf.placeholder('float')
 Y = tf.placeholder('float')
 
@@ -78,16 +105,15 @@ with tf.Session() as sess:
 			print '\n',sess.run(cost, feed_dict={X: train_X, Y:train_Y}) ,'==', oldCost ,'and', sess.run(w) ,'==', oldWeight ,'and', sess.run(b) ,'==', oldBias
 			isEnough()
 
-
 		if enough >= 3:
 			break
-
 		setLearningRate(sess.run(w))
 		oldArgs('%07f' % sess.run(cost, feed_dict={X: train_X, Y:train_Y}),'%07f' % sess.run(w),'%07f' % sess.run(b))
 
 	training_cost = sess.run(cost, feed_dict={X: train_X, Y: train_Y})
 	print "Training cost=", training_cost, "W=", sess.run(w), "b=", sess.run(b), '\n'
-	plt.plot(train_X, train_Y, 'ro', label='Original data')
-	plt.plot(train_X, sess.run(w) * train_X + sess.run(b), label='Fitted line')
+	plt.plot(train_X, train_Y, 'go', label='Original data')
+	plt.plot(frauds[0], frauds[1], 'ro', label='Fraud data')
+	plt.plot(train_X, sess.run(w) * train_X + sess.run(b),'b--', label='Fitted line')
 	plt.legend()
 	plt.show()
