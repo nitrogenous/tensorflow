@@ -8,10 +8,10 @@ import matplotlib.pyplot as plt
 def setLearningRate(weight):
 	global new_learning_rate
 	global n_samples
-	if(tf.is_nan(weight) == True):
-		exit()
-	else:
-		new_learning_rate = np.abs((0.001 / n_samples) / weight)
+	# if(tf.is_nan(weight) == True):
+	# 	exit()
+	# else:
+	new_learning_rate = np.abs((0.001 / n_samples) / weight)
 	return
 
 def isEnough():
@@ -29,30 +29,31 @@ def oldArgs(cost,weight,bias):
 	# print  oldCost, oldWeight, oldBias, '\n'
 	return;
 
-def findFraud(input1,input2):
-	fraud1 = []
-	fraud2 = []
-	avg1 = (np.sum(input1) / len(input1)) + 10
-	avg2 = (np.sum(input2) / len(input2)) + 10
-	sum1 = 0.0
-	sum2 = 0.0
-	for in1,in2 in zip(input1,input2):
-		sum1 += (in1 - avg1)**2.0
-		sum2 += (in2 - avg2)**2.0
 	variance1 = sum1 / len(input1)
-	variance2 = sum2 / len(input2)
-	deviaton1 = math.sqrt(variance1) * 2.0
-	deviaton2 = math.sqrt(variance2) * 1.0
-	avg1 += deviaton1
-	avg2 += deviaton2
-	print '\nFraud Avg:', avg1, '\n'
-	print '\nFraud Avg:', avg2, '\n'
 	for in1,in2 in zip(input1,input2):
-		if((in1 > avg1 or in1 < (avg1*-1.0)) or (in2 > avg2 or in2 < (avg2*-1.0))):
-			fraud1.append(in1)
-			fraud2.append(in2)
-	return zip(fraud1,fraud2)
-
+def delOutlier(input1):
+	input1.reset_index(drop=True)
+	realElements = [] 
+	outliers = []
+	avg = (np.sum(input1.x_axis)+np.sum(input1.y_axis)/len(input1.x_axis)*2)
+	sums = 0.0
+	for i in range(0,len(input1)):
+		sums = ((input1.x_axis[i] + input1.y_axis[i]) - avg)**2
+	variance1 = sums / (len(input1.x_axis)*2)
+	deviaton1 = math.sqrt(variance1)
+	avg += deviaton1
+	print '\nFraud Avg:', avg, '\n'
+	armut = input1
+	outlier = []
+	for i in range(0,len(input1)):
+		if input1.x_axis[i] > avg or input1.x_axis[i] < (avg*-1.0):# or input1.y_axis[i] > avg2 or input1.y_axis[i] < (avg2*-1.0):
+			armut = armut.drop(input1.index[i])
+			outlier.append(input1.iloc[i])
+	outlier = pd.DataFrame(list(outlier)).reset_index(drop=True)
+	armut = pd.DataFrame(armut).reset_index(drop=True)
+	print outlier
+	print armut
+	return (armut,outlier)
 
 enough = 0
 oldCost = 0
@@ -60,18 +61,22 @@ oldWeight = 0
 oldBias = 0 
 rnd = np.random
 
-readCSV = pd.read_csv('train1.csv',delimiter=',', names=['x_axis','y_axis'])
-readCSV = readCSV[1:251]
-train_X = readCSV.x_axis
-train_Y = readCSV.y_axis
-frauds = zip(*findFraud(train_X,train_Y))
-train_X = pd.Series(list(set(train_X) - set(frauds[0])))
-train_Y = pd.Series(list(set(train_Y) - set(frauds[1])))
+readCSV = pd.read_csv('train.csv',delimiter=',', names=['x_axis','y_axis'])
+readCSV = readCSV[0:150]
+cleanCSV = delOutlier(readCSV)
+train = pd.DataFrame(data=cleanCSV[0])
+train_X = train.x_axis
+train_Y = train.y_axis
+outlier = pd.DataFrame(data=cleanCSV[1])
+outlier_X = outlier.x_axis
+outlier_Y = outlier.y_axis
+
 n_samples = train_X.shape[0]
 new_learning_rate = 0.001 / n_samples
 learning_rate = tf.placeholder('float')
-training_epochs = 100
+training_epochs = 50
 display_step = 1
+
 X = tf.placeholder('float')
 Y = tf.placeholder('float')
 
@@ -113,7 +118,7 @@ with tf.Session() as sess:
 	training_cost = sess.run(cost, feed_dict={X: train_X, Y: train_Y})
 	print "Training cost=", training_cost, "W=", sess.run(w), "b=", sess.run(b), '\n'
 	plt.plot(train_X, train_Y, 'go', label='Original data')
-	plt.plot(frauds[0], frauds[1], 'ro', label='Fraud data')
+	plt.plot(outlier_X, outlier_Y, 'ro', label='Outlier data')
 	plt.plot(train_X, sess.run(w) * train_X + sess.run(b),'b--', label='Fitted line')
 	plt.legend()
 	plt.show()
