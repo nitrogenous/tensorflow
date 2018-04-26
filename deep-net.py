@@ -3,8 +3,9 @@ import numpy as np
 import pandas as pd
 import math
 import matplotlib  
-matplotlib.use('TkAgg')   
+matplotlib.use('TkAgg') #for macOs 'python is not a framework error'
 import matplotlib.pyplot as plt  
+
 def setLearningRate(weight):
 	global new_learning_rate
 	global n_samples
@@ -29,24 +30,31 @@ def oldArgs(cost,weight,bias):
 	# print  oldCost, oldWeight, oldBias, '\n'
 	return;
 
-	variance1 = sum1 / len(input1)
-	for in1,in2 in zip(input1,input2):
 def delOutlier(input1):
 	input1.reset_index(drop=True)
 	realElements = [] 
 	outliers = []
-	avg = (np.sum(input1.x_axis)+np.sum(input1.y_axis)/len(input1.x_axis)*2)
+	print input1
+	avg = (np.sum(input1.x_axis)/len(input1.x_axis))
+	avg2 = (np.sum(input1.y_axis)/len(input1.y_axis))
+	print '1. Avg',avg
+	print '1. Avg',avg2
+
+	# print '\n', avg, '\n'
+
 	sums = 0.0
 	for i in range(0,len(input1)):
-		sums = ((input1.x_axis[i] + input1.y_axis[i]) - avg)**2
-	variance1 = sums / (len(input1.x_axis)*2)
-	deviaton1 = math.sqrt(variance1)
-	avg += deviaton1
-	print '\nFraud Avg:', avg, '\n'
+		sums += math.sqrt(np.abs(input1.x_axis[i]) - avg)
+	print '1. Sums', sums
+	variance1 = sums / (len(input1)) * 1.75
+	print 'Variance1',variance1
+	# deviaton1 = (variance1)/2
+	# print 'deviaton1',deviaton1
+	# avg += deviaton1
 	armut = input1
 	outlier = []
 	for i in range(0,len(input1)):
-		if input1.x_axis[i] > avg or input1.x_axis[i] < (avg*-1.0):# or input1.y_axis[i] > avg2 or input1.y_axis[i] < (avg2*-1.0):
+		if (variance1.x_axis[i] > avg) or (variance1.x_axis[i] < (avg*-1.0)) or variance1.y_axis[i] > avg2 or variance1.y_axis[i] < (avg2*-1.0):
 			armut = armut.drop(input1.index[i])
 			outlier.append(input1.iloc[i])
 	outlier = pd.DataFrame(list(outlier)).reset_index(drop=True)
@@ -55,6 +63,33 @@ def delOutlier(input1):
 	print armut
 	return (armut,outlier)
 
+# def delOutlier(Input):
+# 	Input = Input.sort_values(['x_axis','y_axis']);
+# 	Input = Input.reset_index(drop=True)
+# 	realElements = Input
+# 	outliers = []
+# 	Q1 = Input.quantile(0.25)
+# 	Q3 = Input.quantile(0.75)
+# 	# print Q1,Q3
+# 	X_AvgM = Q1 - 1.5*(Q3-Q1)
+# 	X_AvgP = Q3 + 1.5*(Q3-Q1)
+# 	# Q1 = Input.y_axis.quantile(0.25)
+# 	# Q3 = Input.y_axis.quantile(0.75)
+# 	# print Q1,Q3
+# 	# print realElements
+# 	# Y_AvgM = Q1 - 1.5*(Q3-Q1)
+# 	# Y_AvgP = Q3 + 1.5*(Q3-Q1)	
+# 	print X_AvgM,X_AvgP
+# 	# print Y_AvgM,Y_AvgP
+# 	for i in range(0,len(Input)):
+# 		if (Input.x_axis[i] > X_AvgP.x_axis or Input.x_axis[i] < X_AvgP.x_axis) and (Input.y_axis[i] > X_AvgP.y_axis or Input.y_axis[i] < X_AvgM.y_axis):
+# 			print Input.iloc[i]
+# 			outliers.append(Input.iloc[i])
+# 			realElements = realElements.drop(Input.index[i])
+# 	print '\n',outliers,'\n'
+# 	print '\n',realElements,'\n'
+# 	return (realElements,outliers)
+
 enough = 0
 oldCost = 0
 oldWeight = 0
@@ -62,19 +97,20 @@ oldBias = 0
 rnd = np.random
 
 readCSV = pd.read_csv('train.csv',delimiter=',', names=['x_axis','y_axis'])
-readCSV = readCSV[0:150]
+readCSV = readCSV[0:100]
 cleanCSV = delOutlier(readCSV)
+
 train = pd.DataFrame(data=cleanCSV[0])
 train_X = train.x_axis
 train_Y = train.y_axis
-outlier = pd.DataFrame(data=cleanCSV[1])
-outlier_X = outlier.x_axis
-outlier_Y = outlier.y_axis
+outlier = pd.DataFrame(data=cleanCSV[1]) #if cleanCSV[1] != [] else None
+outlier_X = outlier.x_axis #if cleanCSV[1] != [] else None
+outlier_Y = outlier.y_axis #if cleanCSV[1] != [] else None
 
 n_samples = train_X.shape[0]
 new_learning_rate = 0.001 / n_samples
 learning_rate = tf.placeholder('float')
-training_epochs = 50
+training_epochs = 10
 display_step = 1
 
 X = tf.placeholder('float')
@@ -118,7 +154,7 @@ with tf.Session() as sess:
 	training_cost = sess.run(cost, feed_dict={X: train_X, Y: train_Y})
 	print "Training cost=", training_cost, "W=", sess.run(w), "b=", sess.run(b), '\n'
 	plt.plot(train_X, train_Y, 'go', label='Original data')
-	plt.plot(outlier_X, outlier_Y, 'ro', label='Outlier data')
+	plt.plot(outlier_X, outlier_Y, 'ro', label='Outlier data') # if cleanCSV[1] != [] else None
 	plt.plot(train_X, sess.run(w) * train_X + sess.run(b),'b--', label='Fitted line')
 	plt.legend()
 	plt.show()
