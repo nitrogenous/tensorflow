@@ -113,8 +113,8 @@ def outlierLimits(lst):
 	# print lst.values
 	Q1 = lst[math.trunc(len(lst)/4)]
 	Q3 = lst[math.trunc((len(lst)/2) + (len(lst)/4))]
-	low = Q1 - 3*(Q3-Q1)
-	high = Q3 + 3*(Q3-Q1)
+	low = Q1 - 4*(Q3-Q1)
+	high = Q3 + 4*(Q3-Q1)
 	print low,high
 	return (low,high)
 
@@ -125,7 +125,7 @@ oldBias = 0
 rnd = np.random
 
 readCSV = pd.read_csv('train1.csv',delimiter=',', names=['x_axis','y_axis'])
-readCSV = readCSV[0:500]
+readCSV = readCSV[0:1000]
 readCSV = readCSV.sort_values(['x_axis','y_axis'])
 readCSV = readCSV.reset_index(drop=True)
 outliers_X = pd.DataFrame(cleanList(readCSV.x_axis,outlierLimits(readCSV.x_axis)))
@@ -136,24 +136,21 @@ print outliers_Y
 outliers = []
 train = readCSV
 
-for i in outliers_X:
-
-	# print train.iloc[outliers_Y[i]]
+for i in range(len(outliers_X)):
+	# print type(train.iloc[outliers_Y[i]])
 	outliers.extend([train.iloc[i]])
 	train = train.drop(outliers_X.iloc[i])
-	print 'ALO'
+
 
 for i in range(len(outliers_Y)):
 	# print type(train.iloc[outliers_Y[i]])
 	outliers.extend([train.iloc[i]])
 	train = train.drop(outliers_Y.iloc[i])
-	print 'WUT	'
 
 print len(outliers_Y)
 print 'AAA',outliers
 outliers = pd.DataFrame(outliers)
 print outliers
-exit()
 # outliers = outliers.sort_values(['x_axis','y_axis'])
 # outliers = outliers.reset_index(drop=True)
 # print train
@@ -166,7 +163,7 @@ train_Y = train.y_axis
 n_samples = train_X.shape[0]
 new_learning_rate = 0.001 / n_samples
 learning_rate = tf.placeholder('float')
-training_epochs = 100
+training_epochs = 25
 display_step = 1
 
 X = tf.placeholder('float')
@@ -210,7 +207,7 @@ with tf.Session() as sess:
 	training_cost = sess.run(cost, feed_dict={X: train_X, Y: train_Y})
 	print "Training cost=", training_cost, "W=", sess.run(w), "b=", sess.run(b), '\n'
 	plt.plot(train_X, train_Y, 'go', label='Original data')
-	# plt.plot(outliers.x_axis, outliers.y_axis, 'ro', label='Outlier data') 
+	plt.plot(outliers.x_axis, outliers.y_axis, 'ro', label='Outlier data') 
 	plt.plot(train_X, sess.run(w) * train_X + sess.run(b),'b--', label='Fitted line')
 	plt.legend()
 	plt.show()
