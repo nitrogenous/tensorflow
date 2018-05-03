@@ -10,10 +10,10 @@ import matplotlib.pyplot as plt
 def setLearningRate(weight):
 	global new_learning_rate
 	global n_samples
-	# if(tf.is_nan(weight) == True):
-	# 	exit()
-	# else:
-	new_learning_rate = np.abs((0.0001 / n_samples) / weight)
+	if(tf.is_nan(weight) == True):
+		exit()
+	else:
+		new_learning_rate = np.abs((0.0001 / n_samples) / weight)
 	return
 
 def isEnough():
@@ -31,79 +31,19 @@ def oldArgs(cost,weight,bias):
 	# print  oldCost, oldWeight, oldBias, '\n'
 	return;
 
-# def delOutlier(input1):
-# 	input1.reset_index(drop=True)
-# 	realElements = [] 
-# 	outliers = []
-# 	print input1
-# 	avg = (np.sum(input1.x_axis)/len(input1.x_axis))
-# 	avg2 = (np.sum(input1.y_axis)/len(input1.y_axis))
-# 	print '1. Avg',avg
-# 	print '2. Avg',avg2
-
-# 	# print '\n', avg, '\n'
-
-# 	sums = 0.0
-# 	sums2 = 0.0
-# 	for i in range(0,len(input1)):
-# 		sums += math.sqrt(np.abs(input1.x_axis[i] - avg))
-# 		sums2 += math.sqrt(np.abs(input1.y_axis[i] - avg))
-# 	print '1. Sums', sums
-# 	print '2. Sums', sums2
-# 	variance1 = (sums / (len(input1))) 
-# 	variance2 = (sums2 / (len(input1))) 
-# 	avg += variance1
-# 	avg2 += variance2
-# 	print 'Variance1',variance1
-# 	# deviaton1 = (variance1)/2
-# 	# print 'deviaton1',deviaton1
-# 	# avg += deviaton1
-# 	armut = input1
-# 	outlier = []
-# 	for i in range(0,len(input1)):
-# 		if (((input1.x_axis[i] > avg) or (input1.x_axis[i] < (avg*-1.0))) or ((input1.y_axis[i] > avg2) or (input1.y_axis[i] < (avg2*-1.0)))):
-# 			armut = armut.drop(input1.index[i])
-# 			outlier.append(input1.iloc[i])
-# 	outlier = pd.DataFrame(list(outlier)).reset_index(drop=True)
-# 	armut = pd.DataFrame(armut).reset_index(drop=True)
-# 	print outlier
-# 	print armut
-# 	return (armut,outlier)
-
-# def delOutlier(Input):
-	# Input = Input.sort_values(['x_axis','y_axis'])
-	# Input = Input.reset_index(drop=True)
-	# realElements = Input
-	# outliers = []
-	# Q1 = Input.quantile(0.25)
-	# Q3 = Input.quantile(0.75)
-	# # print Q1,Q3
-	# X_AvgM = Q1 - 1.5*(Q3-Q1)
-	# X_AvgP = Q3 + 1.5*(Q3-Q1)
-	# # Q1 = Input.y_axis.quantile(0.25)
-	# # Q3 = Input.y_axis.quantile(0.75)
-	# # print Q1,Q3
-	# # print realElements
-	# # Y_AvgM = Q1 - 1.5*(Q3-Q1)
-	# # Y_AvgP = Q3 + 1.5*(Q3-Q1)	
-	# print X_AvgM,X_AvgP
-	# # print Y_AvgM,Y_AvgP
-	# for i in range(0,len(Input)):
-	# 	if (Input.x_axis[i] > X_AvgP.x_axis or Input.x_axis[i] < X_AvgP.x_axis) and (Input.y_axis[i] > X_AvgP.y_axis or Input.y_axis[i] < X_AvgM.y_axis):
-	# 		print Input.iloc[i]
-	# 		outliers.append(Input.iloc[i])
-	# 		realElements = realElements.drop(Input.index[i])
-	# print '\n',outliers,'\n'
-	# print '\n',realElements,'\n'
-	# return (realElements,outliers)
 def cleanList(hay,needle):
 	# print hay
 	# hay = hay.sort_values()
 	# hay = hay.reset_index(drop=True)
+	hay = pd.DataFrame(hay)
+	needle = zip(*needle)
 	needles = []
+	# print hay
+	# print needle
 	for i in range(len(hay)):
-		if(hay[i] < needle[0] or hay[i] > needle[1]):
-			print needle[0], needle[1],hay[i],i
+		if(hay[0][i] < needle[0][0] or hay[0][i] > needle[0][1] or hay[1][i] < needle[1][0] or hay[1][i] > needle[1][1]):
+			# print 'X: ',needle[0][0], needle[0][1],hay[0][i],i
+			# print 'Y: ',needle[1][0], needle[1][1],hay[1][i],i
 			needles.append(i)
 	return needles
 
@@ -113,9 +53,9 @@ def outlierLimits(lst):
 	# print lst.values
 	Q1 = lst[math.trunc(len(lst)/4)]
 	Q3 = lst[math.trunc((len(lst)/2) + (len(lst)/4))]
-	low = Q1 - 4*(Q3-Q1)
-	high = Q3 + 4*(Q3-Q1)
-	print low,high
+	low = Q1 - 3*(Q3-Q1)
+	high = Q3 + 3*(Q3-Q1)
+	# print low,high
 	return (low,high)
 
 enough = 0
@@ -124,42 +64,29 @@ oldWeight = 0
 oldBias = 0 
 rnd = np.random
 
-readCSV = pd.read_csv('train1.csv',delimiter=',', names=['x_axis','y_axis'])
-readCSV = readCSV[0:1000]
+readCSV = pd.read_csv('spreadsheet.csv',delimiter=',', names=['x_axis','y_axis'])
+readCSV = readCSV[1:100]
 readCSV = readCSV.sort_values(['x_axis','y_axis'])
 readCSV = readCSV.reset_index(drop=True)
-outliers_X = pd.DataFrame(cleanList(readCSV.x_axis,outlierLimits(readCSV.x_axis)))
-outliers_Y = pd.DataFrame(cleanList(readCSV.y_axis,outlierLimits(readCSV.y_axis)))
-print outliers_X
-print outliers_Y
-# exit()
+outliersIndex = cleanList(zip(readCSV.x_axis,readCSV.y_axis),zip(outlierLimits(readCSV.x_axis),outlierLimits(readCSV.y_axis)))
+# print len(outliersIndex)
 outliers = []
 train = readCSV
-
-for i in range(len(outliers_X)):
-	# print type(train.iloc[outliers_Y[i]])
-	outliers.extend([train.iloc[i]])
-	train = train.drop(outliers_X.iloc[i])
+# print outliersIndex
 
 
-for i in range(len(outliers_Y)):
-	# print type(train.iloc[outliers_Y[i]])
-	outliers.extend([train.iloc[i]])
-	train = train.drop(outliers_Y.iloc[i])
+for i in range(0,(len(outliersIndex))):
+	# print '\n',i,'\n'
+	outliers.extend([train.loc[int(outliersIndex[i])]])
+	# print outliers
+	train = train.drop(outliersIndex[i])
 
-print len(outliers_Y)
-print 'AAA',outliers
 outliers = pd.DataFrame(outliers)
 print outliers
-# outliers = outliers.sort_values(['x_axis','y_axis'])
-# outliers = outliers.reset_index(drop=True)
-# print train
-# print pd.DataFrame(train)
-# # exit()
+
 
 train_X = train.x_axis
 train_Y = train.y_axis
-
 n_samples = train_X.shape[0]
 new_learning_rate = 0.001 / n_samples
 learning_rate = tf.placeholder('float')
@@ -207,7 +134,7 @@ with tf.Session() as sess:
 	training_cost = sess.run(cost, feed_dict={X: train_X, Y: train_Y})
 	print "Training cost=", training_cost, "W=", sess.run(w), "b=", sess.run(b), '\n'
 	plt.plot(train_X, train_Y, 'go', label='Original data')
-	plt.plot(outliers.x_axis, outliers.y_axis, 'ro', label='Outlier data') 
+	# plt.plot(outliers.x_axis, outliers.y_axis, 'ro', label='Outlier data') 
 	plt.plot(train_X, sess.run(w) * train_X + sess.run(b),'b--', label='Fitted line')
 	plt.legend()
 	plt.show()
