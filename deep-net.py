@@ -92,7 +92,7 @@ n_samples = train_X.shape[0]
 new_learning_rate = 0.01 / n_samples
 learning_rate = tf.placeholder('float')
 training_epochs = 9999999
-display_step = 1
+display_step = 25
 
 X = tf.placeholder('float')
 Y = tf.placeholder('float')
@@ -105,7 +105,7 @@ cost = tf.reduce_sum(tf.pow(pred-Y,2))/(2*n_samples)
 
 init = tf.global_variables_initializer()
 optimizer = tf.train.GradientDescentOptimizer(learning_rate=new_learning_rate).minimize(cost)
-
+file = open('result.txt','w') 
 with tf.Session() as sess:
 
 	sess.run(init)
@@ -120,8 +120,9 @@ with tf.Session() as sess:
 
 		if (epoch+1) % display_step == 0 or (epoch+1) <= 10:
 			c = sess.run(cost, feed_dict={X: train_X, Y:train_Y})
-			print Fore.RED,'Epoch:' ,Fore.RESET, '%07d' % (epoch+1),Fore.BLUE ,'Cost:' ,Fore.RESET,'%07f' % c, \
-                Fore.GREEN , 'Weight:',Fore.RESET, '%07f' % sess.run(w), Fore.CYAN , 'Bias:',Fore.RESET, '%07f' % sess.run(b),Fore.YELLOW,'Learnin-Rate:',Fore.RESET, new_learning_rate
+			print Fore.RED,'Epoch:' ,Fore.RESET, '%07d' % (epoch+1),Fore.BLUE ,'Cost:' ,Fore.RESET,'%07f' % c,Fore.GREEN , 'Weight:',Fore.RESET, '%07f' % sess.run(w), Fore.CYAN , 'Bias:',Fore.RESET, '%07f' % sess.run(b),Fore.YELLOW,'Learnin-Rate:',Fore.RESET, new_learning_rate
+			data = 'Epoch:', '%07d' % (epoch+1), 'Cost:', '%07f' % c,'Weight:', '%07f' % sess.run(w), 'Bias:', '%07f' % sess.run(b),'Learnin-Rate:', new_learning_rate
+			file.write(str(data))
 
 		if('%07f' % sess.run(cost, feed_dict={X: train_X, Y:train_Y}) == oldCost or '%07f' % sess.run(w) == oldWeight or '%07f' % sess.run(b) == oldBias):
 			print '\n',sess.run(cost, feed_dict={X: train_X, Y:train_Y}) ,'==', oldCost ,'and', sess.run(w) ,'==', oldWeight ,'and', sess.run(b) ,'==', oldBias
@@ -134,9 +135,12 @@ with tf.Session() as sess:
 
 	training_cost = sess.run(cost, feed_dict={X: train_X, Y: train_Y})
 	print Fore.BLUE,"Training Cost:",Fore.RESET, training_cost,Fore.GREEN, "Training Weight:",Fore.RESET, sess.run(w),Fore.CYAN, "Training Bias:",Fore.RESET, sess.run(b), '\n'
+	data = "Training cost=", training_cost, "Training Weight:", sess.run(w), "Training Bias:", sess.run(b), '\n'
+	file.write(str(data))
+	file.close() 
 	plt.plot(train_X, train_Y, 'go', label='Original data')
 	print sess.run(cost, feed_dict={X: train_X, Y: train_Y,learning_rate: new_learning_rate})
-	# plt.plot(outliers.x_axis, outliers.y_axis, 'ro', label='Outlier data') 
+	plt.plot(outliers.x_axis, outliers.y_axis, 'ro', label='Outlier data') 
 	plt.plot(train_X, sess.run(w) * train_X + sess.run(b),'b--', label='Fitted line')
 	plt.legend()
 	plt.show()
